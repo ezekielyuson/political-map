@@ -1,0 +1,25 @@
+{
+  "member": {
+    "bioguideId": "D000123",
+    "directOrderName": "Jane Doe",
+    "firstName": "Jane",
+    "lastName": "Doe",
+    "state": "CA",
+    "district": 17,
+    "officialWebsiteUrl": "https://example.house.gov",
+    "partyHistory": [
+      {"partyName": "Democratic", "partyAbbreviation": "D", "startYear": 2023, "endYear": null}
+    ],
+    "terms": [
+      {
+        "chamber": "House of Representatives",
+        "congress": 118,
+        "startYear": 2023,
+        "endYear": 2025,
+        "partyName": "Democratic",
+        "stateCode": "CA",
+        "district": 17
+      }
+    ]
+  }
+}

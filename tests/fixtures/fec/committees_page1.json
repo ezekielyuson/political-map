@@ -1,0 +1,45 @@
+{
+  "api_version": "1.0",
+  "pagination": {
+    "page": 1,
+    "per_page": 100,
+    "count": 2,
+    "pages": 1
+  },
+  "results": [
+    {
+      "committee_id": "C00123456",
+      "name": "ACME ACTION FUND",
+      "committee_type": "O",
+      "committee_type_full": "Independent expenditure-only committee",
+      "designation": "U",
+      "designation_full": "Unauthorized",
+      "organization_type": "C",
+      "organization_type_full": "Corporation",
+      "state": "DC",
+      "party": null,
+      "treasurer_name": "JOHN SMITH",
+      "first_file_date": "2019-04-01",
+      "last_file_date": "2024-10-15",
+      "cycles": [2020, 2022, 2024],
+      "candidate_ids": []
+    },
+    {
+      "committee_id": "C00999999",
+      "name": "JANE DOE FOR CONGRESS",
+      "committee_type": "H",
+      "committee_type_full": "House",
+      "designation": "P",
+      "designation_full": "Principal campaign committee",
+      "organization_type": null,
+      "organization_type_full": null,
+      "state": "CA",
+      "party": "DEM",
+      "treasurer_name": "PAT TREASURER",
+      "first_file_date": "2023-02-10",
+      "last_file_date": "2024-09-30",
+      "cycles": [2024],
+      "candidate_ids": ["H8CA17123"]
+    }
+  ]
+}

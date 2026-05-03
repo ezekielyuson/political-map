@@ -1,0 +1,63 @@
+{
+  "api_version": "1.0",
+  "pagination": {
+    "page": 1,
+    "per_page": 100,
+    "count": 3,
+    "pages": 1,
+    "last_indexes": null
+  },
+  "results": [
+    {
+      "sub_id": "4061320241499000001",
+      "committee_id": "C00999999",
+      "contributor_id": null,
+      "contributor_name": "PUBLIC, JANE Q",
+      "contributor_employer": "ACME CORP",
+      "contributor_occupation": "ENGINEER",
+      "contributor_state": "CA",
+      "contributor_zip": "94025",
+      "contributor_city": "MENLO PARK",
+      "entity_type": "IND",
+      "is_individual": true,
+      "contribution_receipt_amount": 250.00,
+      "contribution_receipt_date": "2024-06-15",
+      "receipt_type": "15",
+      "receipt_type_full": "Contribution to political committee from an individual"
+    },
+    {
+      "sub_id": "4061320241499000002",
+      "committee_id": "C00999999",
+      "contributor_id": "C00123456",
+      "contributor_name": "ACME ACTION FUND",
+      "contributor_employer": null,
+      "contributor_occupation": null,
+      "contributor_state": "DC",
+      "contributor_zip": "20001",
+      "contributor_city": "WASHINGTON",
+      "entity_type": "PAC",
+      "is_individual": false,
+      "contribution_receipt_amount": 5000.00,
+      "contribution_receipt_date": "2024-07-01",
+      "receipt_type": "11",
+      "receipt_type_full": "Tribal contribution"
+    },
+    {
+      "sub_id": "4061320241499000003",
+      "committee_id": "C00999999",
+      "contributor_id": null,
+      "contributor_name": "PUBLIC, JANE Q",
+      "contributor_employer": "ACME CORP",
+      "contributor_occupation": "ENGINEER",
+      "contributor_state": "CA",
+      "contributor_zip": "94025",
+      "contributor_city": "MENLO PARK",
+      "entity_type": "IND",
+      "is_individual": true,
+      "contribution_receipt_amount": 100.00,
+      "contribution_receipt_date": "2024-08-01",
+      "receipt_type": "15",
+      "receipt_type_full": "Contribution to political committee from an individual"
+    }
+  ]
+}

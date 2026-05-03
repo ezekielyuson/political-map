@@ -1,0 +1,43 @@
+{
+  "api_version": "1.0",
+  "pagination": {
+    "page": 1,
+    "per_page": 100,
+    "count": 2,
+    "pages": 1
+  },
+  "results": [
+    {
+      "candidate_id": "H8CA17123",
+      "name": "DOE, JANE",
+      "party": "DEM",
+      "party_full": "DEMOCRATIC PARTY",
+      "state": "CA",
+      "district": "17",
+      "office": "H",
+      "office_full": "House",
+      "incumbent_challenge": "C",
+      "candidate_status": "C",
+      "cycles": [2024],
+      "election_years": [2024],
+      "principal_committees": [
+        {"committee_id": "C00999999", "name": "JANE DOE FOR CONGRESS"}
+      ]
+    },
+    {
+      "candidate_id": "S4NY00042",
+      "name": "ROE, RICHARD",
+      "party": "REP",
+      "party_full": "REPUBLICAN PARTY",
+      "state": "NY",
+      "district": null,
+      "office": "S",
+      "office_full": "Senate",
+      "incumbent_challenge": "I",
+      "candidate_status": "C",
+      "cycles": [2024],
+      "election_years": [2024],
+      "principal_committees": []
+    }
+  ]
+}

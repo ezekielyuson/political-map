@@ -1,0 +1,82 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "filing_uuid": "11111111-aaaa-bbbb-cccc-222222222222",
+      "filing_type": "SECOND_QUARTER_REPORT",
+      "filing_type_display": "Second Quarter Report",
+      "filing_year": 2024,
+      "filing_period": "second_quarter",
+      "filing_period_display": "Second Quarter (April 1 - June 30)",
+      "filing_document_url": "https://lda.senate.gov/filings/public/filing/...",
+      "income": "120000.00",
+      "expenses": null,
+      "expenses_method": "income",
+      "posted_by_name": "Tester McTest",
+      "dt_posted": "2024-07-20T14:32:00.000000Z",
+      "registrant": {
+        "id": 5001,
+        "name": "K STREET LOBBYING LLP",
+        "description": "Lobbying firm",
+        "address_1": "1500 K Street NW",
+        "city": "Washington",
+        "state": "DC",
+        "country": "USA"
+      },
+      "client": {
+        "id": 9100,
+        "name": "ACME GLOBAL CORP",
+        "general_description": "Multinational widget conglomerate",
+        "state": "DE",
+        "country": "USA"
+      },
+      "lobbying_activities": [
+        {
+          "general_issue_code": "TAX",
+          "general_issue_code_display": "Taxation/Internal Revenue Code",
+          "description": "Issues related to corporate tax reform.",
+          "lobbyists": [
+            {"lobbyist": {"id": 700, "first_name": "Pat", "last_name": "Lobby"}, "covered_position": "Former Senate staffer"}
+          ],
+          "government_entities": [
+            {"id": 1, "name": "U.S. House of Representatives"},
+            {"id": 2, "name": "U.S. Senate"}
+          ]
+        },
+        {
+          "general_issue_code": "ENV",
+          "general_issue_code_display": "Environment/Superfund",
+          "description": "Clean Air Act amendments.",
+          "lobbyists": [
+            {"lobbyist": {"id": 700, "first_name": "Pat", "last_name": "Lobby"}, "covered_position": null}
+          ],
+          "government_entities": [
+            {"id": 50, "name": "Environmental Protection Agency (EPA)"}
+          ]
+        }
+      ]
+    },
+    {
+      "filing_uuid": "33333333-dddd-eeee-ffff-444444444444",
+      "filing_type": "REGISTRATION",
+      "filing_type_display": "Registration",
+      "filing_year": 2024,
+      "filing_period": "second_quarter",
+      "filing_document_url": "https://lda.senate.gov/filings/public/filing/...",
+      "income": null,
+      "expenses": null,
+      "dt_posted": "2024-04-15T10:00:00.000000Z",
+      "registrant": {
+        "id": 5001,
+        "name": "K STREET LOBBYING LLP"
+      },
+      "client": {
+        "id": 9200,
+        "name": "BETA HEALTH SYSTEMS INC"
+      },
+      "lobbying_activities": []
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "pagination": {"count": 2, "next": null},
+  "committees": [
+    {
+      "systemCode": "hsju00",
+      "name": "Committee on the Judiciary",
+      "chamber": "House",
+      "committeeTypeCode": "Standing"
+    },
+    {
+      "systemCode": "hsju03",
+      "name": "Subcommittee on Crime, Terrorism, and Homeland Security",
+      "chamber": "House",
+      "committeeTypeCode": "Subcommittee",
+      "parent": {"systemCode": "hsju00", "name": "Committee on the Judiciary"}
+    }
+  ]
+}

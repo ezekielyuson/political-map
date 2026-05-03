@@ -1,0 +1,16 @@
+{
+  "committee": {
+    "systemCode": "hsju00",
+    "name": "Committee on the Judiciary",
+    "chamber": "House",
+    "committeeTypeCode": "Standing",
+    "updateDate": "2024-09-15",
+    "subcommittees": [
+      {"systemCode": "hsju03", "name": "Subcommittee on Crime, Terrorism, and Homeland Security"}
+    ],
+    "currentMembers": [
+      {"bioguideId": "D000123", "name": "Doe, Jane", "party": "D", "state": "CA", "title": "Chair", "rank": 1},
+      {"bioguideId": "R000999", "name": "Roe, Richard", "party": "R", "state": "NY", "title": "Ranking Member", "rank": 1}
+    ]
+  }
+}

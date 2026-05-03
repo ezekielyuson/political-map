@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual env
+.venv/
+venv/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Build
+dist/
+build/
+wheels/
+
+# Project data
+data/
+raw/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude Code per-machine state (shared settings.json may be committed)
+.claude/settings.local.json
+
+# uv lockfile is tracked — this is an application, not a library.
+# (For libraries we'd ignore it here.)

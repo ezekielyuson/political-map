@@ -1,0 +1,46 @@
+# Trimmed congress-legislators fixture. Real schema, fake people for tests.
+- id:
+    bioguide: D000123
+    fec:
+      - H8CA17123
+      - H6CA17089
+    opensecrets: N00099001
+    govtrack: 412345
+  name:
+    first: Jane
+    last: Doe
+  bio:
+    gender: F
+  terms:
+    - type: rep
+      start: '2023-01-03'
+      end: '2025-01-03'
+      state: CA
+      district: 17
+      party: Democrat
+- id:
+    bioguide: R000999
+    fec:
+      - S4NY00042
+    opensecrets: N00012345
+  name:
+    first: Richard
+    last: Roe
+  terms:
+    - type: sen
+      start: '2019-01-03'
+      end: '2025-01-03'
+      state: NY
+      party: Republican
+- id:
+    bioguide: L000174
+    fec:
+      - S0VT00033
+      - S6VT00065
+  name:
+    first: Patrick
+    last: Leahy
+  terms:
+    - type: sen
+      state: VT
+      party: Democrat
