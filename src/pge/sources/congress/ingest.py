@@ -21,20 +21,25 @@ from typing import Literal
 from pge.graph.aliases import find_node_by_external_id, merge_nodes
 from pge.graph.db import GraphDB
 from pge.sources.congress import fetch
+from pge.sources.congress.bootstrap import bootstrap_politicians_from_yaml
 from pge.sources.congress.parse import (
     CommitteeDetail,
     CommitteeSummary,
     MemberDetail,
     MemberSummary,
 )
-from pge.sources.congress.resolve import LegislatorIndex, load_index
+from pge.sources.congress.resolve import (
+    LegislatorIndex,
+    ensure_legislators_yaml,
+    load_index,
+)
 from pge.sources.congress.to_graph import (
     write_committee_detail,
     write_committee_summary,
     write_member,
 )
 
-EntityType = Literal["members", "committees", "resolve"]
+EntityType = Literal["members", "committees", "resolve", "bootstrap"]
 
 
 def ingest_members(
@@ -148,18 +153,23 @@ def ingest(
     current_only: bool = True,
 ) -> dict[str, int]:
     """Top-level entrypoint for the CLI."""
-    if entity == "resolve":
-        index = load_index(
-            legislators_cache_dir or Path("data/ref"),
-            include_historical=include_historical,
+    cache_dir = legislators_cache_dir or Path("data/ref")
+
+    if entity == "bootstrap":
+        # Network-only seeding from the legislators YAML. No API key required,
+        # so this is the path used at Docker build time and by anyone demoing
+        # without keys.
+        paths = ensure_legislators_yaml(
+            cache_dir, include_historical=include_historical
         )
+        return bootstrap_politicians_from_yaml(db, *paths)
+
+    if entity == "resolve":
+        index = load_index(cache_dir, include_historical=include_historical)
         return resolve_pass(db, index=index)
 
     api_key = api_key or fetch.get_api_key()
-    index = load_index(
-        legislators_cache_dir or Path("data/ref"),
-        include_historical=include_historical,
-    )
+    index = load_index(cache_dir, include_historical=include_historical)
 
     if entity == "members":
         return ingest_members(

@@ -342,6 +342,73 @@ def test_resolve_pass_handles_late_fec_ingest(db_path: Path, index) -> None:
 # ---- schema bump regression ----------------------------------------------
 
 
+def test_bootstrap_seeds_politicians_from_yaml(db_path: Path) -> None:
+    """The build-time bake step populates Politicians with no API key."""
+    from pge.sources.congress.bootstrap import bootstrap_politicians_from_yaml
+
+    fixture = FIXTURES / "legislators.yaml"
+    with GraphDB.open(db_path) as db:
+        result = bootstrap_politicians_from_yaml(db, fixture)
+    assert result["members"] == 3  # fixture has 3 legislators
+
+    with GraphDB.open(db_path) as db:
+        n = db.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE kind='Politician'"
+        ).fetchone()[0]
+    assert n == 3
+
+    with GraphDB.open(db_path) as db:
+        kind, payload = get_node_payload(db, "pol:L000174")
+        node = node_from_row(kind, payload)
+    assert isinstance(node, PoliticianNode)
+    assert node.bioguide_id == "L000174"
+    assert node.chamber == "senate"
+    assert node.party == "DEM"
+    assert node.state == "VT"
+    # No FEC ext id — that lands later via the merge path.
+    assert node.external_ids == {"congress": "L000174"}
+
+
+def test_bootstrap_idempotent(db_path: Path) -> None:
+    from pge.sources.congress.bootstrap import bootstrap_politicians_from_yaml
+
+    fixture = FIXTURES / "legislators.yaml"
+    with GraphDB.open(db_path) as db:
+        bootstrap_politicians_from_yaml(db, fixture)
+        bootstrap_politicians_from_yaml(db, fixture)
+    with GraphDB.open(db_path) as db:
+        n = db.conn.execute(
+            "SELECT COUNT(*) FROM nodes WHERE kind='Politician'"
+        ).fetchone()[0]
+    assert n == 3
+
+
+def test_bootstrap_then_fec_ingest_resolves_cleanly(db_path: Path, index) -> None:
+    """The order of operations the deploy uses: bootstrap (no key) first,
+    then a later FEC ingest should still merge into the canonical bioguide
+    node without orphaning anything."""
+    from pge.sources.congress.bootstrap import bootstrap_politicians_from_yaml
+    from pge.sources.congress.ingest import resolve_pass
+
+    fixture = FIXTURES / "legislators.yaml"
+    fec_raw = FECCandidateRaw.model_validate(
+        json.loads((FEC_FIXTURES / "candidates_page1.json").read_text())["results"][0]
+    )
+
+    with GraphDB.open(db_path) as db:
+        bootstrap_politicians_from_yaml(db, fixture)  # creates pol:D000123 etc.
+    with GraphDB.open(db_path) as db:
+        write_candidate(db, fec_raw)  # creates pol:H8CA17123
+    with GraphDB.open(db_path) as db:
+        resolve_pass(db, index=index)
+
+    with GraphDB.open(db_path) as db:
+        # The FEC-keyed node has been merged into the bioguide-keyed one.
+        from pge.graph.aliases import find_node_by_external_id
+        assert find_node_by_external_id(db, "fec", "H8CA17123") == "pol:D000123"
+        assert find_node_by_external_id(db, "congress", "D000123") == "pol:D000123"
+
+
 def test_schema_includes_aliases_table(db_path: Path) -> None:
     with GraphDB.open(db_path) as db:
         tables = {

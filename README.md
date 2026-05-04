@@ -65,17 +65,45 @@ The persistent volume mounts at `/data`, so `data/pge.db` survives restarts
 and redeploys. Auto-stop is enabled — the machine spins down when idle and
 wakes on the first request (3–5s cold start, $0/month on the free tier).
 
-The deployed app exposes only the read API (`/health`, `/nodes/...`,
-`/neighbors`, `/paths`, `/edges-between`). **Ingest still runs locally** —
-this is intentional: ingestion is a long-running batch job, not something
-to wire to a public endpoint. To populate the cloud DB, ingest locally
-and copy the file up:
+### Seed data: every deploy ships with ~535 Politicians
 
+The Docker build runs `pge ingest congress --entity bootstrap`, which pulls
+the public [`unitedstates/congress-legislators`](https://github.com/unitedstates/congress-legislators)
+YAML and seeds a `Politician` node per current member of Congress. **No API
+key is required for this** — the YAML is public.
+
+Result: a fresh deploy returns real data immediately:
+
+- `GET /health` → non-zero `nodes_total`
+- `GET /nodes/pol:L000174` → Patrick Leahy
+- `GET /nodes/pol:D000123` → whoever has that bioguide
+
+There are **no edges** in the seed (the YAML doesn't have donations,
+committee assignments, or lobbying). Those still require running the
+key-gated ingestors.
+
+### Adding edges + deeper data (optional)
+
+The deployed app exposes only the read API. Long-running ingest still
+happens off the prod machine. Two paths:
+
+**A. Local ingest + SFTP up.** Ingest on your laptop, push the resulting
+DB onto the Fly volume:
 ```bash
 fly ssh sftp shell -a <your-app>
 > put data/pge.db /data/pge.db
 > exit
 ```
+
+**B. SSH into the machine and ingest there.** Set API keys as Fly secrets
+(`fly secrets set FEC_API_KEY=...`), then:
+```bash
+fly ssh console -a <your-app>
+$ pge ingest fec --entity committees --since 2024-01-01
+$ pge ingest congress --entity members
+```
+Caveat: machines stop when idle, so long ingest runs need
+`auto_stop_machines = "off"` in `fly.toml` for the duration.
 
 The `pge ui review` Streamlit UI is **not** deployed (it's an ops surface
 that needs a separate process). Run it locally pointed at the same DB.

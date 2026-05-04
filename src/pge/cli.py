@@ -133,7 +133,7 @@ def ingest_congress(
         typer.Option(
             "--entity",
             "-e",
-            help="Which Congress entity: members | committees | resolve",
+            help="Which Congress entity: members | committees | resolve | bootstrap",
         ),
     ],
     legislators_cache_dir: Annotated[
@@ -168,12 +168,22 @@ def ingest_congress(
 ) -> None:
     """Pull members / committees from Congress.gov, or run a resolve pass.
 
-    The ``resolve`` entity does no fetching; it just merges any
-    FEC-keyed politicians into their bioguide-keyed canonical nodes
-    using the congress-legislators YAML.
+    Entities:
+
+    * ``members``    -- API ingest of all current members + detail. Needs
+                        ``CONGRESS_API_KEY``.
+    * ``committees`` -- API ingest of all committees + per-committee
+                        member rosters. Needs ``CONGRESS_API_KEY``.
+    * ``resolve``    -- merge any FEC-keyed politicians into their
+                        bioguide-keyed canonical nodes (no fetching).
+    * ``bootstrap``  -- seed Politician nodes from the public
+                        congress-legislators YAML. No API key required.
+                        Useful for demos and at Docker build time.
     """
-    if entity not in {"members", "committees", "resolve"}:
-        raise typer.BadParameter("--entity must be members | committees | resolve")
+    if entity not in {"members", "committees", "resolve", "bootstrap"}:
+        raise typer.BadParameter(
+            "--entity must be members | committees | resolve | bootstrap"
+        )
     if not path.exists():
         typer.echo(f"no database at {path}; run `pge db init` first", err=True)
         raise typer.Exit(code=1)
