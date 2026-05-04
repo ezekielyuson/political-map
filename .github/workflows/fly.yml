@@ -1,0 +1,48 @@
+# Auto-deploy the API to Fly.io on every push to main.
+#
+# This is the canonical deploy path. Local `flyctl deploy` still works,
+# but tends to fight with stale local fly.toml -- this workflow always
+# uses the version of fly.toml that's on GitHub.
+#
+# One-time setup (in GitHub):
+#   1. Repo Settings -> Secrets and variables -> Actions -> New repository secret
+#   2. Name: FLY_API_TOKEN
+#      Value: run `fly auth token` locally and paste the result, or
+#             create a deploy token in https://fly.io/dashboard -> Tokens
+#   3. After saving, push any commit (or use the workflow_dispatch button
+#      on the Actions tab) to trigger the first run.
+
+name: Deploy API to Fly.io
+
+on:
+  push:
+    branches: [main]
+    paths:
+      # Only deploy when something the API actually depends on changes.
+      # Frontend-only changes (web/) are picked up by Vercel separately.
+      - "src/**"
+      - "scripts/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "fly.toml"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/fly.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy app
+    runs-on: ubuntu-latest
+    # Don't queue overlapping deploys -- if a new push lands, cancel the
+    # in-flight one. Saves CI minutes and avoids race-y "stuck deployment" UI.
+    concurrency:
+      group: fly-deploy
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: Deploy
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

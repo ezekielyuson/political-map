@@ -48,18 +48,23 @@ uv run pge ui review        # Streamlit on http://localhost:8501
 
 ## Deploy to Fly.io
 
-The repo ships a `Dockerfile` and `fly.toml` ready for [Fly.io](https://fly.io).
+The repo ships a `Dockerfile` and `fly.toml` ready for [Fly.io](https://fly.io),
+**plus a GitHub Actions workflow** that auto-deploys on every push to `main`.
 
-```bash
-# one-time
-brew install flyctl                # or: curl -L https://fly.io/install.sh | sh
-fly auth login
+### One-time setup
 
-# from the repo root
-fly launch --copy-config --no-deploy   # picks up fly.toml; pick a unique app name
-fly volumes create pge_data --region iad --size 1
-fly deploy
-```
+1. Install flyctl + auth (only needed for the initial app create):
+   ```bash
+   curl -L https://fly.io/install.sh | sh
+   fly auth login
+   fly launch --copy-config --no-deploy   # creates the Fly app, accept defaults
+   ```
+2. Get a deploy token: `fly auth token` (or [Fly dashboard → Tokens](https://fly.io/dashboard))
+3. In GitHub: **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `FLY_API_TOKEN`
+   - Value: the token from step 2.
+4. Push any commit (or trigger the workflow manually from the **Actions** tab).
+   Every push to `main` that touches the API now redeploys automatically.
 
 The persistent volume mounts at `/data`, so `data/pge.db` survives restarts
 and redeploys. Auto-stop is enabled — the machine spins down when idle and
