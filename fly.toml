@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for political-map on 2026-05-04T01:21:47Z
+# fly.toml app configuration file generated for political-map-sxyr9w on 2026-05-04T01:42:51Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'political-map'
-primary_region = 'iad'
+app = 'political-map-sxyr9w'
+primary_region = 'ams'
 
 [build]
 
