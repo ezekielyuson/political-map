@@ -34,6 +34,13 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Frontend (also has its own web/.gitignore for finer-grained rules).
+web/node_modules/
+web/.next/
+web/.vercel/
+web/out/
+web/next-env.d.ts
+
 # Claude Code per-machine state (shared settings.json may be committed)
 .claude/settings.local.json
 

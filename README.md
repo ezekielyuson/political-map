@@ -108,6 +108,21 @@ Caveat: machines stop when idle, so long ingest runs need
 The `pge ui review` Streamlit UI is **not** deployed (it's an ops surface
 that needs a separate process). Run it locally pointed at the same DB.
 
+## Web frontend
+
+A minimal Next.js 15 app lives in [`web/`](web/README.md). It calls the API
+above and renders search, profile, and path-finder pages.
+
+Deploy it on **Vercel**:
+1. <https://vercel.com/new> → import this repo.
+2. **Root Directory** → `web`.
+3. Set env var `NEXT_PUBLIC_PGE_API_URL` to your Fly app URL (e.g.
+   `https://political-map.fly.dev`).
+4. Deploy.
+
+Subsequent `git push` redeploys both Fly (the API, from repo root) and
+Vercel (the frontend, from `web/`) — same commit, two targets.
+
 ## Architecture
 
 ```
