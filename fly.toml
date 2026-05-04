@@ -11,9 +11,19 @@ primary_region = 'ams'
 [env]
   PGE_DB_PATH = '/data/pge.db'
 
-[[mounts]]
-  source = 'pge_data'
-  destination = '/data'
+# Note: no [[mounts]] block. The entrypoint always seeds /data/pge.db from
+# the DB baked into the image, so persistent storage isn't needed for the
+# read-only public API. The DB still lives at /data/pge.db, just on the
+# container's ephemeral filesystem -- replaced fresh on every boot.
+#
+# To enable persistent storage later (e.g. for in-machine ingest that
+# survives redeploys):
+#   1. fly volumes create pge_data --region iad --size 1 -a <your-app>
+#   2. add the [[mounts]] block back:
+#        [[mounts]]
+#          source = 'pge_data'
+#          destination = '/data'
+#   3. flip the entrypoint's "always overwrite" to "seed only if absent".
 
 [http_service]
   internal_port = 8080
