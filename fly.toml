@@ -1,29 +1,19 @@
-# fly.toml app configuration file generated for political-map-sxyr9w on 2026-05-04T01:42:51Z
+# fly.toml app configuration file generated for political-map-sxyr9w on 2026-05-04T02:41:49Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
 app = 'political-map-sxyr9w'
-primary_region = 'ams'
+primary_region = 'sjc'
 
 [build]
 
 [env]
   PGE_DB_PATH = '/data/pge.db'
 
-# Note: no [[mounts]] block. The entrypoint always seeds /data/pge.db from
-# the DB baked into the image, so persistent storage isn't needed for the
-# read-only public API. The DB still lives at /data/pge.db, just on the
-# container's ephemeral filesystem -- replaced fresh on every boot.
-#
-# To enable persistent storage later (e.g. for in-machine ingest that
-# survives redeploys):
-#   1. fly volumes create pge_data --region iad --size 1 -a <your-app>
-#   2. add the [[mounts]] block back:
-#        [[mounts]]
-#          source = 'pge_data'
-#          destination = '/data'
-#   3. flip the entrypoint's "always overwrite" to "seed only if absent".
+[[mounts]]
+  source = 'pge_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 8080
