@@ -171,6 +171,40 @@ def get_node(db: GraphDB, node_id: str) -> NodeView | None:
     return _node_view_from_row(row)
 
 
+def list_nodes(
+    db: GraphDB,
+    *,
+    kind: str | None = None,
+    q: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> list[NodeView]:
+    """Browse / search nodes.
+
+    * ``kind``  -- filter to one node kind (Politician, PAC, ...).
+    * ``q``     -- case-insensitive substring match on name. We use SQL
+                   ``LIKE`` for v1; full-text search is a future upgrade.
+    * ``limit`` / ``offset`` -- pagination.
+
+    Returns nodes ordered by name. No alias resolution: only canonical
+    rows live in ``nodes``, so the result set is naturally deduped.
+    """
+    where_clauses: list[str] = []
+    params: list[Any] = []
+    if kind:
+        where_clauses.append("kind = ?")
+        params.append(kind)
+    if q:
+        where_clauses.append("name LIKE ? COLLATE NOCASE")
+        params.append(f"%{q}%")
+    where = " WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+    rows = db.conn.execute(
+        f"SELECT {_NODE_COLS} FROM nodes{where} ORDER BY name LIMIT ? OFFSET ?",
+        (*params, limit, offset),
+    ).fetchall()
+    return [_node_view_from_row(r) for r in rows]
+
+
 def neighbors(
     db: GraphDB,
     node_id: str,

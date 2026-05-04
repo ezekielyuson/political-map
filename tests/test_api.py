@@ -84,6 +84,63 @@ def test_get_node_404(client: TestClient) -> None:
     assert resp.status_code == 404
 
 
+def test_search_nodes_no_filters_returns_all(client: TestClient) -> None:
+    resp = client.get("/nodes")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert {n["id"] for n in body["nodes"]} == {
+        "pol:A", "pol:B", "pac:1", "gov:hsju00",
+    }
+    assert body["limit"] == 20
+    assert body["offset"] == 0
+
+
+def test_search_nodes_filter_by_kind(client: TestClient) -> None:
+    resp = client.get("/nodes?kind=Politician")
+    assert resp.status_code == 200
+    ids = {n["id"] for n in resp.json()["nodes"]}
+    assert ids == {"pol:A", "pol:B"}
+
+
+def test_search_nodes_substring_query_case_insensitive(client: TestClient) -> None:
+    resp = client.get("/nodes?q=alice")
+    assert resp.status_code == 200
+    ids = {n["id"] for n in resp.json()["nodes"]}
+    assert ids == {"pol:A"}
+
+
+def test_search_nodes_pagination(client: TestClient) -> None:
+    resp = client.get("/nodes?limit=2&offset=0")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert len(body["nodes"]) == 2
+    # Second page picks up the remaining ids.
+    resp2 = client.get("/nodes?limit=2&offset=2")
+    body2 = resp2.json()
+    assert len(body2["nodes"]) == 2
+    # No id appears in both pages.
+    assert {n["id"] for n in body["nodes"]}.isdisjoint(
+        {n["id"] for n in body2["nodes"]}
+    )
+
+
+def test_search_nodes_invalid_limit_rejected(client: TestClient) -> None:
+    resp = client.get("/nodes?limit=0")
+    assert resp.status_code == 422
+    resp = client.get("/nodes?limit=999")
+    assert resp.status_code == 422
+
+
+def test_cors_headers_present(client: TestClient) -> None:
+    """CORS preflight should succeed for cross-origin browser requests."""
+    resp = client.get(
+        "/health",
+        headers={"Origin": "http://localhost:3000"},
+    )
+    assert resp.status_code == 200
+    assert resp.headers.get("access-control-allow-origin") == "*"
+
+
 def test_get_node_resolves_alias(client: TestClient) -> None:
     resp = client.get("/nodes/pol:fec123")
     assert resp.status_code == 200

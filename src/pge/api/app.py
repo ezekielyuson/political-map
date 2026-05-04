@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 
 from pge.graph.db import DEFAULT_DB_PATH, GraphDB
 from pge.graph.queries import (
@@ -35,6 +36,7 @@ from pge.graph.queries import (
     edges_between,
     find_paths,
     get_node,
+    list_nodes,
     neighbors,
 )
 
@@ -56,6 +58,16 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         title="Political Graph Engine",
         version="0.1.0",
         description="Local-dev API over the PGE relationship graph.",
+    )
+
+    # The API is read-only and serves public political data, so wide-open
+    # CORS is fine. If you ever add write endpoints, lock this down to your
+    # frontend's origin via ``allow_origins=[...]`` instead.
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["GET"],
+        allow_headers=["*"],
     )
 
     def get_db() -> Iterator[GraphDB]:
@@ -88,6 +100,21 @@ def create_app(db_path: Path | None = None) -> FastAPI:
     @application.get("/health")
     def health(db: Annotated[GraphDB, Depends(get_db)]) -> dict:
         return {"ok": True, **db.stats()}
+
+    @application.get("/nodes")
+    def search_nodes(
+        db: Annotated[GraphDB, Depends(get_db)],
+        kind: Annotated[str | None, Query(description="Node kind filter (e.g. 'Politician').")] = None,
+        q: Annotated[str | None, Query(description="Case-insensitive substring match on name.")] = None,
+        limit: Annotated[int, Query(ge=1, le=100)] = 20,
+        offset: Annotated[int, Query(ge=0)] = 0,
+    ) -> dict:
+        """Browse / search nodes by kind and/or name."""
+        return {
+            "nodes": list_nodes(db, kind=kind, q=q, limit=limit, offset=offset),
+            "limit": limit,
+            "offset": offset,
+        }
 
     @application.get("/nodes/{node_id}", response_model=NodeView)
     def read_node(
