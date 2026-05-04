@@ -52,6 +52,12 @@ class PoliticianNode(_NodeBase):
     chamber: Literal["house", "senate", "executive", None] = None
     party: str | None = Field(None, description="Latest known party affiliation.")
     birth_date: date | None = None
+    # Coarse geocoding for the map view: senators get state-capital coords;
+    # House reps land at the same point (district centroids would be nicer
+    # but require shapefile parsing -- v2 enhancement).
+    latitude: float | None = None
+    longitude: float | None = None
+    district: str | None = None
 
 
 class PoliticalPartyNode(_NodeBase):
@@ -72,6 +78,13 @@ class CompanyNode(_NodeBase):
     ticker: str | None = None
     industry: str | None = None
     sector: str | None = None
+    domain: str | None = Field(
+        None, description="Primary website domain. Used for Clearbit logo lookup."
+    )
+    hq_city: str | None = None
+    hq_state: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class PACNode(_NodeBase):

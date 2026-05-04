@@ -7,6 +7,8 @@
 import type {
   EdgeView,
   HealthResponse,
+  MapConnectionsResponse,
+  MapPoliticiansResponse,
   NodeListResponse,
   NodeView,
   PathsView,
@@ -101,6 +103,30 @@ export function indexSubgraph(sg: { nodes: NodeView[]; edges: EdgeView[] }) {
   const nodesById = new Map<string, NodeView>(sg.nodes.map((n) => [n.id, n]));
   const edgesById = new Map<string, EdgeView>(sg.edges.map((e) => [e.id, e]));
   return { nodesById, edgesById };
+}
+
+export async function getMapPoliticians(opts: {
+  chamber?: string;
+  party?: string;
+} = {}): Promise<MapPoliticiansResponse> {
+  const params = new URLSearchParams();
+  if (opts.chamber) params.set("chamber", opts.chamber);
+  if (opts.party) params.set("party", opts.party);
+  const qs = params.toString();
+  return jsonFetch<MapPoliticiansResponse>(`/map/politicians${qs ? "?" + qs : ""}`);
+}
+
+export async function getMapConnections(
+  id: string,
+): Promise<MapConnectionsResponse | null> {
+  try {
+    return await jsonFetch<MapConnectionsResponse>(
+      `/map/connections/${encodeURIComponent(id)}`,
+    );
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  }
 }
 
 export { ApiError };

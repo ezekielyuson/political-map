@@ -20,10 +20,11 @@ as a string and fails to resolve ``Depends``, which silently turns it into
 a query parameter and 422s every request.
 """
 
+import json
 import os
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -172,6 +173,149 @@ def create_app(db_path: Path | None = None) -> FastAPI:
             edge_kinds=edge_kind,
             evidence_types=evidence_type,
         )
+
+    @application.get("/map/politicians")
+    def map_politicians(
+        db: Annotated[GraphDB, Depends(get_db)],
+        chamber: Annotated[str | None, Query()] = None,
+        party: Annotated[str | None, Query()] = None,
+    ) -> dict:
+        """Compact list of all geolocated politicians, for the map view.
+
+        Returns only the fields the map needs (id, name, party, state,
+        chamber, lat, lng) to keep the payload small enough to send all
+        ~535 in one request. Filters: ``chamber=house|senate``, ``party``."""
+        clauses = ["kind = 'Politician'"]
+        params: list[Any] = []
+        rows = db.conn.execute(
+            f"SELECT id, name, payload FROM nodes WHERE {' AND '.join(clauses)}",
+            params,
+        ).fetchall()
+        out: list[dict] = []
+        for row in rows:
+            attrs = json.loads(row["payload"])
+            if attrs.get("latitude") is None or attrs.get("longitude") is None:
+                continue
+            if chamber and attrs.get("chamber") != chamber:
+                continue
+            if party and attrs.get("party") != party:
+                continue
+            out.append(
+                {
+                    "id": row["id"],
+                    "name": row["name"],
+                    "party": attrs.get("party"),
+                    "state": attrs.get("state"),
+                    "chamber": attrs.get("chamber"),
+                    "district": attrs.get("district"),
+                    "latitude": attrs.get("latitude"),
+                    "longitude": attrs.get("longitude"),
+                }
+            )
+        return {"politicians": out}
+
+    @application.get("/map/connections/{node_id}")
+    def map_connections(
+        node_id: str,
+        db: Annotated[GraphDB, Depends(get_db)],
+        depth: Annotated[int, Query(ge=1, le=3)] = 2,
+    ) -> dict:
+        """Companies connected to a politician via Donation -> PAC -> parent
+        BusinessPartnership. Returns a flat list of {company, pacs, total_cents}
+        ready for arc-drawing on the map."""
+        canonical = get_node(db, node_id)
+        if canonical is None:
+            raise HTTPException(status_code=404, detail=f"unknown node: {node_id}")
+
+        # Two-hop subgraph from the politician.
+        sg = neighbors(db, node_id, depth=depth, edge_limit=5000)
+
+        # Index nodes/edges for traversal.
+        nodes_by_id = {n.id: n for n in sg.nodes}
+        edges = sg.edges
+
+        # Step 1: which PACs donated to this politician?
+        pol_pac_amounts: dict[str, int] = {}
+        for e in edges:
+            if e.kind != "Donation":
+                continue
+            if e.dst_id != canonical.id:
+                continue
+            pac_id = e.src_id
+            cents = int(e.attrs.get("amount_cents", 0))
+            pol_pac_amounts[pac_id] = pol_pac_amounts.get(pac_id, 0) + cents
+
+        # Step 2: which Companies are parents of those PACs?
+        pac_to_company: dict[str, str] = {}
+        for e in edges:
+            if e.kind != "BusinessPartnership":
+                continue
+            if e.dst_id in pol_pac_amounts:  # company -> pac
+                pac_to_company[e.dst_id] = e.src_id
+
+        # Step 3: aggregate by company.
+        company_aggregate: dict[str, dict] = {}
+        for pac_id, cents in pol_pac_amounts.items():
+            company_id = pac_to_company.get(pac_id)
+            if company_id is None:
+                continue
+            company_node = nodes_by_id.get(company_id)
+            if company_node is None or company_node.kind != "Company":
+                continue
+            attrs = company_node.attrs
+            lat = attrs.get("latitude")
+            lng = attrs.get("longitude")
+            if lat is None or lng is None:
+                continue
+            domain = attrs.get("domain")
+            slot = company_aggregate.setdefault(
+                company_id,
+                {
+                    "company_id": company_id,
+                    "name": company_node.name,
+                    "domain": domain,
+                    "logo_url": (
+                        f"https://logo.clearbit.com/{domain}" if domain else None
+                    ),
+                    "hq_city": attrs.get("hq_city"),
+                    "hq_state": attrs.get("hq_state"),
+                    "latitude": lat,
+                    "longitude": lng,
+                    "total_cents": 0,
+                    "pacs": [],
+                },
+            )
+            slot["total_cents"] += cents
+            pac_node = nodes_by_id.get(pac_id)
+            if pac_node:
+                slot["pacs"].append(
+                    {
+                        "id": pac_id,
+                        "name": pac_node.name,
+                        "amount_cents": cents,
+                    }
+                )
+
+        connections = sorted(
+            company_aggregate.values(),
+            key=lambda c: -c["total_cents"],
+        )
+
+        # Politician's own coordinates for the map's center / starting point.
+        pol_attrs = canonical.attrs
+        return {
+            "politician": {
+                "id": canonical.id,
+                "name": canonical.name,
+                "party": pol_attrs.get("party"),
+                "state": pol_attrs.get("state"),
+                "chamber": pol_attrs.get("chamber"),
+                "district": pol_attrs.get("district"),
+                "latitude": pol_attrs.get("latitude"),
+                "longitude": pol_attrs.get("longitude"),
+            },
+            "connections": connections,
+        }
 
     @application.get("/edges-between")
     def read_edges_between(

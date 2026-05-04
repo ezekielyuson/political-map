@@ -11,14 +11,15 @@ from pathlib import Path
 from typing import Literal
 
 from pge.graph.db import GraphDB
-from pge.sources.fec import fetch, to_graph
+from pge.sources.congress.resolve import load_index as load_legislators_index
+from pge.sources.fec import bulk, fetch, to_graph
 from pge.sources.fec.parse import (
     FECCandidateRaw,
     FECCommitteeRaw,
     FECContributionRaw,
 )
 
-EntityType = Literal["committees", "candidates", "contributions"]
+EntityType = Literal["committees", "candidates", "contributions", "bulk-pas2"]
 
 _STATE_KEY = {
     "committees": "fec.committees.min_last_f1_date",
@@ -53,6 +54,17 @@ def ingest(
     max_pages: int | None = None,
 ) -> dict[str, int]:
     """Run one ingest pass. Returns ``{'rows': N}`` summary."""
+    if entity == "bulk-pas2":
+        # No API key needed -- FEC bulk downloads are public.
+        index = load_legislators_index(Path("data/ref"), include_historical=True)
+        cycle_to_use = cycle or 2024
+        return bulk.ingest_bulk_pas2(
+            db,
+            cycle=cycle_to_use,
+            legislators_index=index,
+            cache_dir=Path("data/fec_bulk"),
+        )
+
     api_key = api_key or fetch.get_api_key()
     since_str = _resolve_since(db, entity, since)
     rows = 0

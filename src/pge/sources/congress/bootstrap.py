@@ -25,6 +25,7 @@ import yaml
 from pge.graph.db import GraphDB
 from pge.graph.ingest import upsert_node
 from pge.schema.nodes import PoliticianNode
+from pge.seed.locations import lookup as state_capital_lookup
 
 _PARTY_MAP: dict[str, str] = {
     "Democrat": "DEM",
@@ -76,15 +77,27 @@ def bootstrap_politicians_from_yaml(db: GraphDB, *paths: Path) -> dict[str, int]
             chamber = _CHAMBER_MAP.get(latest.get("type") or "")
             party_raw = latest.get("party") or ""
             party = _PARTY_MAP.get(party_raw, party_raw or None)
+            state = latest.get("state")
+            district_raw = latest.get("district")
+            district = str(district_raw) if district_raw is not None else None
+
+            # Coarse geocoding: state capital. House district centroids
+            # would be more accurate; v2 enhancement.
+            coords = state_capital_lookup(state)
+            lat = coords[0] if coords else None
+            lng = coords[1] if coords else None
 
             node = PoliticianNode(
                 id=f"pol:{bioguide}",
                 name=full_name,
                 external_ids={"congress": bioguide},
                 bioguide_id=bioguide,
-                state=latest.get("state"),
+                state=state,
                 chamber=chamber,
                 party=party,
+                latitude=lat,
+                longitude=lng,
+                district=district,
             )
             upsert_node(db, node)
             written += 1

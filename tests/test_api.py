@@ -131,6 +131,114 @@ def test_search_nodes_invalid_limit_rejected(client: TestClient) -> None:
     assert resp.status_code == 422
 
 
+def test_map_politicians_returns_geocoded_only(populated_db: Path) -> None:
+    """Adds a geocoded politician + ensures the /map endpoint returns it
+    while skipping anything without lat/lng."""
+    from pge.graph.ingest import upsert_node as node_upsert
+    with GraphDB.open(populated_db) as db:
+        node_upsert(
+            db,
+            PoliticianNode(
+                id="pol:geo1", name="Geo Senator", state="CA",
+                chamber="senate", party="DEM",
+                latitude=38.5816, longitude=-121.4944,
+            ),
+        )
+    c = TestClient(create_app(populated_db))
+    resp = c.get("/map/politicians")
+    assert resp.status_code == 200
+    body = resp.json()
+    ids = {p["id"] for p in body["politicians"]}
+    assert "pol:geo1" in ids
+    # The fixture's pol:A and pol:B don't have lat/lng -> skipped.
+    assert "pol:A" not in ids
+
+
+def test_map_politicians_filter_by_party(populated_db: Path) -> None:
+    from pge.graph.ingest import upsert_node as node_upsert
+    with GraphDB.open(populated_db) as db:
+        node_upsert(db, PoliticianNode(
+            id="pol:dem", name="Dem", state="CA", chamber="senate",
+            party="DEM", latitude=38.0, longitude=-121.0,
+        ))
+        node_upsert(db, PoliticianNode(
+            id="pol:rep", name="Rep", state="TX", chamber="senate",
+            party="REP", latitude=30.0, longitude=-97.0,
+        ))
+    c = TestClient(create_app(populated_db))
+    resp = c.get("/map/politicians?party=DEM")
+    ids = {p["id"] for p in resp.json()["politicians"]}
+    assert "pol:dem" in ids
+    assert "pol:rep" not in ids
+
+
+def test_map_connections_aggregates_by_company(populated_db: Path) -> None:
+    """Build a small Company -> PAC -> Politician chain and verify the
+    /map/connections endpoint walks it correctly."""
+    from pge.graph.ingest import upsert_edge as edge_upsert
+    from pge.graph.ingest import upsert_node as node_upsert
+    from pge.schema.edges import BusinessPartnershipEdge, DonationEdge
+    from pge.schema.nodes import CompanyNode, PACNode
+
+    with GraphDB.open(populated_db) as db:
+        node_upsert(db, PoliticianNode(
+            id="pol:focus", name="Focus", state="CA",
+            chamber="senate", party="DEM",
+            latitude=38.5, longitude=-121.5,
+        ))
+        node_upsert(db, CompanyNode(
+            id="co:seed:test", name="Test Inc",
+            domain="test.com", hq_city="X", hq_state="NY",
+            latitude=40.0, longitude=-74.0,
+        ))
+        node_upsert(db, PACNode(
+            id="pac:test1", name="Test PAC 1", pac_type="corporate",
+            fec_committee_id="C1",
+        ))
+        node_upsert(db, PACNode(
+            id="pac:test2", name="Test PAC 2", pac_type="corporate",
+            fec_committee_id="C2",
+        ))
+        edge_upsert(db, BusinessPartnershipEdge(
+            id="bp:1", src_id="co:seed:test", dst_id="pac:test1",
+            evidence_type="VERIFIED", source_name="t", source_id="x",
+            relation="parent",
+        ))
+        edge_upsert(db, BusinessPartnershipEdge(
+            id="bp:2", src_id="co:seed:test", dst_id="pac:test2",
+            evidence_type="VERIFIED", source_name="t", source_id="y",
+            relation="parent",
+        ))
+        edge_upsert(db, DonationEdge(
+            id="d:1", src_id="pac:test1", dst_id="pol:focus",
+            evidence_type="VERIFIED", source_name="t", source_id="d1",
+            amount_cents=50000,  # $500
+        ))
+        edge_upsert(db, DonationEdge(
+            id="d:2", src_id="pac:test2", dst_id="pol:focus",
+            evidence_type="VERIFIED", source_name="t", source_id="d2",
+            amount_cents=75000,  # $750
+        ))
+
+    c = TestClient(create_app(populated_db))
+    resp = c.get("/map/connections/pol:focus")
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["politician"]["id"] == "pol:focus"
+    assert len(body["connections"]) == 1
+    conn = body["connections"][0]
+    assert conn["company_id"] == "co:seed:test"
+    assert conn["total_cents"] == 125000  # $500 + $750
+    assert conn["domain"] == "test.com"
+    assert conn["logo_url"] == "https://logo.clearbit.com/test.com"
+    assert {p["id"] for p in conn["pacs"]} == {"pac:test1", "pac:test2"}
+
+
+def test_map_connections_404_for_missing_politician(client: TestClient) -> None:
+    resp = client.get("/map/connections/pol:nope")
+    assert resp.status_code == 404
+
+
 def test_cors_headers_present(client: TestClient) -> None:
     """CORS preflight should succeed for cross-origin browser requests."""
     resp = client.get(

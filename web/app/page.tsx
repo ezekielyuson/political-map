@@ -26,6 +26,20 @@ export default async function Home() {
           them. Every connection carries provenance: where it came from, when
           it was true, how confident we are.
         </p>
+        <div className="flex gap-3 pt-1">
+          <a
+            href="/map"
+            className="inline-block rounded-md bg-accent px-4 py-2 text-white text-sm font-medium no-underline hover:bg-blue-600"
+          >
+            Open the map →
+          </a>
+          <a
+            href="/paths"
+            className="inline-block rounded-md border border-slate-300 px-4 py-2 text-sm font-medium no-underline hover:bg-slate-50"
+          >
+            Find paths between two nodes
+          </a>
+        </div>
       </section>
 
       <SearchBox />

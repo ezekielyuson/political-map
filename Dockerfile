@@ -27,15 +27,22 @@ RUN uv sync --frozen --no-install-project --no-dev
 COPY src ./src
 RUN uv sync --frozen --no-dev
 
-# 3. bake the seed DB. Needs network for the legislators YAML download
-# (~2 MB from raw.githubusercontent.com). If the build happens offline,
-# this step fails loudly -- the user can retry with network or comment it
-# out and seed via SFTP later.
-RUN mkdir -p /app/data/ref && \
+# 3. bake the seed DB. Needs network for two downloads (both unauthenticated):
+#    - legislators YAML (~2 MB) from raw.githubusercontent.com -- gives us
+#      ~535 Politician nodes plus the bioguide<->FEC id bridge.
+#    - FEC bulk PAC->candidate file (~50 MB compressed) from fec.gov -- gives
+#      us real Donation edges from major corporate PACs to those politicians.
+# If the build is offline, this step fails loudly. Comment out the second
+# RUN if you want a politicians-only deploy.
+RUN mkdir -p /app/data/ref /app/data/fec_bulk && \
     uv run pge db init --path /app/data/pge.db && \
     uv run pge ingest congress --entity bootstrap \
         --legislators-cache /app/data/ref \
-        --path /app/data/pge.db
+        --path /app/data/pge.db && \
+    (uv run pge ingest fec --entity bulk-pas2 --cycle 2024 \
+        --path /app/data/pge.db \
+     || echo "[build] bulk-pas2 ingest failed; continuing with politicians-only seed") && \
+    rm -rf /app/data/fec_bulk
 
 COPY scripts/entrypoint.sh /app/scripts/entrypoint.sh
 RUN chmod +x /app/scripts/entrypoint.sh

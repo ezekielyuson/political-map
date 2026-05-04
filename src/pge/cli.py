@@ -72,7 +72,11 @@ def ingest_fec(
         typer.Option(
             "--entity",
             "-e",
-            help="Which FEC entity to pull: committees | candidates | contributions",
+            help=(
+                "Which FEC entity: committees | candidates | contributions | "
+                "bulk-pas2 (no API key needed; downloads PAC->candidate "
+                "contributions for the cycle)"
+            ),
         ),
     ],
     since: Annotated[
@@ -105,8 +109,10 @@ def ingest_fec(
         pge ingest fec --entity committees --since 2024-01-01
         pge ingest fec --entity contributions --committee-id C00123456
     """
-    if entity not in {"committees", "candidates", "contributions"}:
-        raise typer.BadParameter("--entity must be committees | candidates | contributions")
+    if entity not in {"committees", "candidates", "contributions", "bulk-pas2"}:
+        raise typer.BadParameter(
+            "--entity must be committees | candidates | contributions | bulk-pas2"
+        )
     if not path.exists():
         typer.echo(f"no database at {path}; run `pge db init` first", err=True)
         raise typer.Exit(code=1)

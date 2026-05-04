@@ -25,6 +25,9 @@ export default function RootLayout({
               <Link href="/" className="hover:text-ink no-underline">
                 Search
               </Link>
+              <Link href="/map" className="hover:text-ink no-underline">
+                Map
+              </Link>
               <Link href="/paths" className="hover:text-ink no-underline">
                 Paths
               </Link>

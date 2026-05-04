@@ -55,6 +55,56 @@ export interface HealthResponse {
   edges_by_evidence: Record<string, number>;
 }
 
+// /map/politicians payload
+export interface MapPolitician {
+  id: string;
+  name: string;
+  party: string | null;
+  state: string | null;
+  chamber: "house" | "senate" | "executive" | null;
+  district: string | null;
+  latitude: number;
+  longitude: number;
+}
+
+export interface MapPoliticiansResponse {
+  politicians: MapPolitician[];
+}
+
+// /map/connections/{id} payload
+export interface MapConnectionPac {
+  id: string;
+  name: string;
+  amount_cents: number;
+}
+
+export interface MapConnectionCompany {
+  company_id: string;
+  name: string;
+  domain: string | null;
+  logo_url: string | null;
+  hq_city: string | null;
+  hq_state: string | null;
+  latitude: number;
+  longitude: number;
+  total_cents: number;
+  pacs: MapConnectionPac[];
+}
+
+export interface MapConnectionsResponse {
+  politician: {
+    id: string;
+    name: string;
+    party: string | null;
+    state: string | null;
+    chamber: string | null;
+    district: string | null;
+    latitude: number | null;
+    longitude: number | null;
+  };
+  connections: MapConnectionCompany[];
+}
+
 // What a node "is" determines how we render it. Keep this in sync with the
 // NodeKind literal in src/pge/schema/nodes.py.
 export const NODE_KINDS = [
