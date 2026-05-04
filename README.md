@@ -46,6 +46,40 @@ uv run pge serve            # FastAPI on http://localhost:8000
 uv run pge ui review        # Streamlit on http://localhost:8501
 ```
 
+## Deploy to Fly.io
+
+The repo ships a `Dockerfile` and `fly.toml` ready for [Fly.io](https://fly.io).
+
+```bash
+# one-time
+brew install flyctl                # or: curl -L https://fly.io/install.sh | sh
+fly auth login
+
+# from the repo root
+fly launch --copy-config --no-deploy   # picks up fly.toml; pick a unique app name
+fly volumes create pge_data --region iad --size 1
+fly deploy
+```
+
+The persistent volume mounts at `/data`, so `data/pge.db` survives restarts
+and redeploys. Auto-stop is enabled — the machine spins down when idle and
+wakes on the first request (3–5s cold start, $0/month on the free tier).
+
+The deployed app exposes only the read API (`/health`, `/nodes/...`,
+`/neighbors`, `/paths`, `/edges-between`). **Ingest still runs locally** —
+this is intentional: ingestion is a long-running batch job, not something
+to wire to a public endpoint. To populate the cloud DB, ingest locally
+and copy the file up:
+
+```bash
+fly ssh sftp shell -a <your-app>
+> put data/pge.db /data/pge.db
+> exit
+```
+
+The `pge ui review` Streamlit UI is **not** deployed (it's an ops surface
+that needs a separate process). Run it locally pointed at the same DB.
+
 ## Architecture
 
 ```

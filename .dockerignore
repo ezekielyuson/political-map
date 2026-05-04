@@ -1,0 +1,38 @@
+# Build context hygiene -- keep the deploy image small and fast to build.
+
+# Local Python state
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Project data / secrets / archived raw responses (huge, regenerated on demand)
+data/
+raw/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+.env
+.env.*
+!.env.example
+
+# Tests + fixtures aren't shipped in the deploy image.
+tests/
+
+# Editor / OS / agent state
+.git/
+.gitignore
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db
+
+# Repo docs we don't need at runtime (README ships separately if wanted).
+*.md
+!src/pge/sources/*/README.md
+!src/pge/resolution/README.md
