@@ -67,6 +67,24 @@ def create_app(db_path: Path | None = None) -> FastAPI:
         with GraphDB.open(db_path) as db:
             yield db
 
+    @application.get("/")
+    def index() -> dict:
+        """Directory of available endpoints. Cheap, no DB hit -- so it works
+        even when ``/data`` is empty or the volume hasn't mounted yet."""
+        return {
+            "service": "Political Graph Engine",
+            "version": "0.1.0",
+            "endpoints": {
+                "health": "/health",
+                "docs": "/docs",
+                "openapi": "/openapi.json",
+                "node": "/nodes/{id}",
+                "neighbors": "/nodes/{id}/neighbors?depth=1",
+                "paths": "/paths?from=<id>&to=<id>&max_depth=3",
+                "edges_between": "/edges-between?a=<id>&b=<id>",
+            },
+        }
+
     @application.get("/health")
     def health(db: Annotated[GraphDB, Depends(get_db)]) -> dict:
         return {"ok": True, **db.stats()}
