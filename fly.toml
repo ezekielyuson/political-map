@@ -1,45 +1,35 @@
-# Fly.io app config for PGE.
+# fly.toml app configuration file generated for political-map on 2026-05-04T01:21:47Z
 #
-# Notes:
-# - `app` must be globally unique on Fly. If "political-map" is taken,
-#   either change it here or run `fly launch --copy-config` and pick a
-#   new name interactively (it'll rewrite this file).
-# - `primary_region`: iad = Ashburn, VA. Change if you'd rather host
-#   closer to you (e.g. lax, ord, ams). Region codes: https://fly.io/docs/reference/regions/
-# - The persistent volume holds /data/pge.db. First-time setup needs:
-#       fly volumes create pge_data --region iad --size 1
-#   `fly launch` will create it for you on the first run; this declaration
-#   just tells subsequent deploys to remount it.
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "political-map"
-primary_region = "iad"
+app = 'political-map'
+primary_region = 'iad'
 
 [build]
 
 [env]
-  PGE_DB_PATH = "/data/pge.db"
+  PGE_DB_PATH = '/data/pge.db'
 
 [[mounts]]
-  source = "pge_data"
-  destination = "/data"
+  source = 'pge_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  # Free-tier friendly: spin down when idle, spin up on request.
-  # First request after idle pays a ~3-5s cold start; trade-off is $0/month.
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
 
-[[http_service.checks]]
-  grace_period = "10s"
-  interval = "30s"
-  method = "GET"
-  timeout = "5s"
-  path = "/health"
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '10s'
+    method = 'GET'
+    path = '/health'
 
 [[vm]]
-  cpu_kind = "shared"
+  cpu_kind = 'shared'
   cpus = 1
   memory_mb = 512
